@@ -1,0 +1,102 @@
+@model IEnumerable<NguyenHoangNgocChauBusinessObjects.Models.SystemAccount>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold m-0"><i class="bi bi-people-fill text-primary me-2"></i>Account Management</h2>
+    <button class="btn btn-primary shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccount()">
+        <i class="bi bi-plus-lg me-1"></i> Create account
+    </button>
+</div>
+<form class="mb-4">
+    <div class="input-group shadow-sm rounded-pill overflow-hidden">
+        <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control border-0 py-2" name="q" value="@ViewBag.Query" placeholder="Search by name, email or role..." />
+    </div>
+</form>
+<div class="table-wrapper animate-fade-in-down">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th class="text-end px-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var x in Model){
+                <tr>
+                    <td class="fw-medium">@x.AccountName</td>
+                    <td class="text-muted">@x.AccountEmail</td>
+                    <td>
+                        <span class="badge rounded-pill bg-@(x.AccountRole==1?"info":"secondary")">
+                            <i class="bi bi-shield-check me-1"></i>@(x.AccountRole==1?"Staff":"Lecturer")
+                        </span>
+                    </td>
+                    <td class="text-end px-4">
+                        <button class="btn btn-sm btn-light text-primary shadow-sm me-2 rounded-circle" data-bs-toggle="modal" data-bs-target="#accountModal" data-id="@x.AccountId" data-name="@x.AccountName" data-email="@x.AccountEmail" data-password="@x.AccountPassword" data-role="@x.AccountRole" onclick="openAccount(this)" title="Edit">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <form class="d-inline" method="post" asp-action="Delete" onsubmit="return confirm('Are you sure you want to delete this account?')">
+                            <input type="hidden" name="id" value="@x.AccountId"/>
+                            <button class="btn btn-sm btn-light text-danger shadow-sm rounded-circle" title="Delete">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="accountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" method="post" asp-action="Save">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="accountModalTitle">Create account</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input id="accountId" type="hidden" name="AccountId"/>
+                <div class="form-floating mb-3">
+                    <input id="accountName" class="form-control" name="AccountName" placeholder="Name" required/>
+                    <label for="accountName">Full Name</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="accountEmail" class="form-control" name="AccountEmail" type="email" placeholder="Email" required/>
+                    <label for="accountEmail">Email Address</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="accountPassword" class="form-control" name="AccountPassword" type="password" placeholder="Password" required/>
+                    <label for="accountPassword">Password</label>
+                </div>
+                <div class="form-floating mb-2">
+                    <select id="accountRole" class="form-select" name="AccountRole">
+                        <option value="1">Staff</option>
+                        <option value="2">Lecturer</option>
+                    </select>
+                    <label for="accountRole">Role</label>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary rounded-pill px-4 shadow-sm"><i class="bi bi-save me-1"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openAccount(button){
+    const d=button?button.dataset:{};
+    document.getElementById('accountId').value=d.id||'0';
+    document.getElementById('accountName').value=d.name||'';
+    document.getElementById('accountEmail').value=d.email||'';
+    document.getElementById('accountPassword').value=d.password||'';
+    document.getElementById('accountRole').value=d.role||'1';
+    document.getElementById('accountModalTitle').innerHTML=d.id?'<i class="bi bi-pencil-square text-primary me-2"></i>Edit Account':'<i class="bi bi-person-plus text-primary me-2"></i>Create Account';
+}
+</script>
+}

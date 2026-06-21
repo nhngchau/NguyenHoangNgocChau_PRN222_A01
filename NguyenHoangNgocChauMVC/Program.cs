@@ -1,0 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using NguyenHoangNgocChauBusinessObjects.Data;
+using NguyenHoangNgocChauBusinessObjects.DAO;
+using NguyenHoangNgocChauBusinessObjects.Repositories;
+using NguyenHoangNgocChauBusinessObjects.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllersWithViews();
+builder.Services.AddSession();
+builder.Services.AddDbContext<FUNewsManagementContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+var admin = builder.Configuration.GetSection("AdminAccount").Get<AdminAccountOptions>() ?? new();
+builder.Services.AddSingleton<IAdminAccountProvider>(new AdminAccountProvider(admin));
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<AccountDAO>(); builder.Services.AddScoped<CategoryDAO>(); builder.Services.AddScoped<NewsDAO>(); builder.Services.AddScoped<TagDAO>();
+builder.Services.AddScoped<IAccountRepository, AccountRepository>(); builder.Services.AddScoped<ICategoryRepository, CategoryRepository>(); builder.Services.AddScoped<INewsRepository, NewsRepository>(); builder.Services.AddScoped<ITagRepository, TagRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>(); builder.Services.AddScoped<IAccountService, AccountService>(); builder.Services.AddScoped<INewsService, NewsService>();
+var app = builder.Build();
+if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Home/Error");
+app.UseStaticFiles(); app.UseRouting(); app.UseSession();
+app.MapControllerRoute(name: "default", pattern: "{controller=Auth}/{action=Login}/{id?}");
+app.Run();

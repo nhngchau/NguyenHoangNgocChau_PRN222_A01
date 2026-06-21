@@ -1,0 +1,176 @@
+@model IEnumerable<NguyenHoangNgocChauBusinessObjects.Models.NewsArticle>
+@using NguyenHoangNgocChauBusinessObjects.Models
+@{ 
+    ViewData["Title"]="News"; 
+    var staff=Context.Session.GetString("Role")=="1"; 
+    var tags=ViewBag.Tags as IEnumerable<Tag> ?? []; 
+    var categories=ViewBag.Categories as IEnumerable<Category> ?? []; 
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold m-0"><i class="bi bi-newspaper text-primary me-2"></i>News Management</h2>
+    @if(staff){
+    <button class="btn btn-primary shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#newsModal" onclick="openNews()">
+        <i class="bi bi-plus-lg me-1"></i> Create news
+    </button>
+    }
+</div>
+
+<form class="mb-4">
+    <div class="input-group shadow-sm rounded-pill overflow-hidden">
+        <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control border-0 py-2" name="q" value="@ViewBag.Query" placeholder="Search title, headline, content or source..." />
+    </div>
+</form>
+
+<div class="table-wrapper animate-fade-in-down">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 10%">ID</th>
+                    <th style="width: 40%">Article</th>
+                    <th style="width: 15%">Category</th>
+                    <th style="width: 15%">Created</th>
+                    <th style="width: 10%">Status</th>
+                    @if(staff){<th class="text-end px-4" style="width: 10%">Actions</th>}
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var x in Model){
+                var selectedTags=string.Join(',',x.NewsTags.Select(t=>t.TagId));
+                <tr>
+                    <td class="text-muted font-monospace small">@x.NewsArticleId</td>
+                    <td>
+                        <h6 class="fw-bold mb-1 text-dark">@x.NewsTitle</h6>
+                        <p class="text-muted small mb-1">@x.Headline</p>
+                        <a class="text-decoration-none small fw-medium" asp-action="Details" asp-route-id="@x.NewsArticleId">Read More <i class="bi bi-arrow-right-short"></i></a>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">@x.Category?.CategoryName</span></td>
+                    <td class="small text-muted"><i class="bi bi-calendar3 me-1"></i>@x.CreatedDate?.ToString("MMM dd, yyyy")</td>
+                    <td>
+                        <span class="badge rounded-pill bg-@(x.NewsStatus==true?"success":"secondary")">
+                            <i class="bi bi-circle-fill small me-1"></i>@(x.NewsStatus==true?"Active":"Inactive")
+                        </span>
+                    </td>
+                    @if(staff){
+                    <td class="text-end px-4">
+                        <button class="btn btn-sm btn-light text-primary shadow-sm me-2 rounded-circle" data-bs-toggle="modal" data-bs-target="#newsModal" data-id="@x.NewsArticleId" data-title="@x.NewsTitle" data-headline="@x.Headline" data-content="@x.NewsContent" data-source="@x.NewsSource" data-category="@x.CategoryId" data-status="@(x.NewsStatus==true?"true":"false")" data-tags="@selectedTags" onclick="openNews(this)" title="Edit">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <form class="d-inline" method="post" asp-action="Delete" onsubmit="return confirm('Are you sure you want to delete this news article?')">
+                            <input type="hidden" name="id" value="@x.NewsArticleId"/>
+                            <button class="btn btn-sm btn-light text-danger shadow-sm rounded-circle" title="Delete">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </form>
+                    </td>
+                    }
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if(staff){
+<div class="modal fade" id="newsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form class="modal-content" method="post" asp-action="Save">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="newsModalTitle">Create news</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input id="newsId" class="form-control font-monospace" name="NewsArticleId" placeholder="ID" required/>
+                            <label for="newsId">Article ID</label>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-floating">
+                            <input id="newsTitle" class="form-control" name="NewsTitle" placeholder="Title" required/>
+                            <label for="newsTitle">News Title</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <input id="newsHeadline" class="form-control" name="Headline" placeholder="Headline" required/>
+                            <label for="newsHeadline">Headline</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <textarea id="newsContent" class="form-control" name="NewsContent" placeholder="Content" style="height: 150px" required></textarea>
+                            <label for="newsContent">Content</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input id="newsSource" class="form-control" name="NewsSource" placeholder="Source" required/>
+                            <label for="newsSource">Source</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select id="newsCategory" class="form-select" name="CategoryId" required>
+                                <option value="" disabled selected>Select a category</option>
+                                @foreach(var c in categories){
+                                    <option value="@c.CategoryId">@c.CategoryName</option>
+                                }
+                            </select>
+                            <label for="newsCategory">Category</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 mt-4">
+                        <label class="form-label fw-bold text-muted small text-uppercase"><i class="bi bi-tags me-1"></i>Tags</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach(var t in tags){
+                            <div class="form-check form-check-inline border rounded px-3 py-2 bg-light m-0">
+                                <input class="form-check-input news-tag shadow-none" type="checkbox" name="tagIds" value="@t.TagId" id="tag_@t.TagId"/> 
+                                <label class="form-check-label ms-1 cursor-pointer" for="tag_@t.TagId">@t.TagName</label>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 mt-3">
+                        <input type="hidden" name="NewsStatus" value="false"/>
+                        <div class="form-check form-switch p-3 bg-light rounded border">
+                            <input class="form-check-input ms-0 mt-1 shadow-none" id="newsStatus" type="checkbox" name="NewsStatus" value="true" checked/>
+                            <label class="form-check-label fw-medium ms-3" for="newsStatus">Publish (Active)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary rounded-pill px-4 shadow-sm"><i class="bi bi-save me-1"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+}
+
+@section Scripts {
+<script>
+function openNews(button){
+    const d=button?button.dataset:{};
+    const edit=!!d.id;
+    document.getElementById('newsId').value=d.id||'';
+    document.getElementById('newsId').readOnly=edit;
+    document.getElementById('newsTitle').value=d.title||'';
+    document.getElementById('newsHeadline').value=d.headline||'';
+    document.getElementById('newsContent').value=d.content||'';
+    document.getElementById('newsSource').value=d.source||'';
+    document.getElementById('newsCategory').value=d.category||'';
+    document.getElementById('newsStatus').checked=d.status!=='false';
+    const selected=(d.tags||'').split(',');
+    document.querySelectorAll('.news-tag').forEach(x=>x.checked=selected.includes(x.value));
+    document.getElementById('newsModalTitle').innerHTML=edit?'<i class="bi bi-pencil-square text-primary me-2"></i>Edit News Article':'<i class="bi bi-file-earmark-plus text-primary me-2"></i>Create News Article';
+}
+</script>
+}
